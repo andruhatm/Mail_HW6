@@ -1,6 +1,7 @@
 package dao;
 
 import dto.Organization;
+import org.jetbrains.annotations.NotNull;
 
 import java.sql.*;
 import java.util.ArrayList;
@@ -10,10 +11,11 @@ public class OrganizationDAO implements DAO<Organization> {
 
 	final Connection connection;
 
-	public OrganizationDAO(Connection connection) {
+	public OrganizationDAO(@NotNull Connection connection) {
 		this.connection = connection;
 	}
 
+	@NotNull
 	@Override
 	public List<Organization> getAll() {
 		List<Organization> result = new ArrayList<>();
@@ -34,6 +36,7 @@ public class OrganizationDAO implements DAO<Organization> {
 		return result;
 	}
 
+	@NotNull
 	@Override
 	public Organization get(int id) {
 		try(Statement statement = connection.createStatement()){
@@ -55,7 +58,7 @@ public class OrganizationDAO implements DAO<Organization> {
 	}
 
 	@Override
-	public void save(Organization entity) {
+	public boolean save(@NotNull Organization entity) {
 		try(PreparedStatement ps = connection.prepareStatement("INSERT INTO \"Organization\"(id,name,inn,checking_acc) VALUES (?,?,?,?)")){
 			ps.setInt(1,entity.getId());
 			ps.setString(2,entity.getName());
@@ -64,11 +67,13 @@ public class OrganizationDAO implements DAO<Organization> {
 			ps.executeUpdate();
 		}catch (SQLException e){
 			e.getMessage();
+			return false;
 		}
+		return true;
 	}
 
 	@Override
-	public void update(Organization entity) {
+	public boolean update(@NotNull Organization entity) {
 		try(PreparedStatement ps = connection.prepareStatement("UPDATE \"Organization\" SET name = ? ,inn = ?,checking_acc = ? WHERE id = ?)")){
 			ps.setString(1,entity.getName());
 			ps.setString(2,entity.getInn());
@@ -77,18 +82,22 @@ public class OrganizationDAO implements DAO<Organization> {
 			ps.executeUpdate();
 		}catch (SQLException e){
 			e.getMessage();
+			return false;
 		}
+		return true;
 	}
 
 	@Override
-	public void delete(Organization entity) {
+	public boolean delete(int id) {
 		try(PreparedStatement ps = connection.prepareStatement("DELETE FROM \"Organization\" WHERE id = ?)")){
-			ps.setInt(1,entity.getId());
+			ps.setInt(1,id);
 			if(ps.executeUpdate() == 0){
-				throw new IllegalStateException("Record with id: "+entity.getId()+" was not found");
+				throw new IllegalStateException("Record with id: "+id+" was not found");
 			}
 		}catch (SQLException e){
 			e.getMessage();
+			return false;
 		}
+		return true;
 	}
 }

@@ -1,12 +1,15 @@
 package dao;
 
-import java.sql.*;
+import org.jetbrains.annotations.NotNull;
 
-public class Reports {
+import java.sql.*;
+import java.text.DecimalFormat;
+
+public final class Reports {
 
 	final Connection connection;
 
-	public Reports(Connection connection) {
+	public Reports(@NotNull Connection connection) {
 		this.connection = connection;
 	}
 
@@ -31,7 +34,7 @@ public class Reports {
 		}
 	}
 
-	public void report2(int higherThan){
+	public void report2(@NotNull int higherThan){
 		try(Statement statement = connection.createStatement()){
 			try(ResultSet rs = statement.executeQuery(
 							"SELECT O.name,\n" +
@@ -53,7 +56,7 @@ public class Reports {
 		}
 	}
 
-	public void report3(String date1,String date2){
+	public void report3(@NotNull String date1,@NotNull String date2){
 		try(PreparedStatement statement = connection.prepareStatement(
 						"SELECT W.date,\n" +
 						"       sum(price) as sumP,\n" +
@@ -84,17 +87,45 @@ public class Reports {
 		}
 	}
 
-	public void report4(String date1,String date2){
+	public void report4(@NotNull String date1,@NotNull String date2){
 		try(PreparedStatement statement = connection.prepareStatement(
-						"SELECT \"Organization\".name as company,\n" +
-										"       I.quantity,\n" +
-										"       I.price,\n" +
+						"SELECT \"Organization\".id,\n" +
+										"       \"Organization\".name as company,\n" +
+										"       N.nomenclature_id,\n" +
 										"       N.name\n" +
 										"FROM \"Organization\"\n" +
-										"LEFT JOIN \"Waybill\" W on W.organization_id = \"Organization\".id\n" +
-										"LEFT JOIN \"Waybill_items\" I on W.id = I.waybill_id\n" +
-										"LEFT JOIN \"Nomenclature\" N on I.nomenclature = N.nomenclature_id \n" +
+										"         JOIN \"Waybill\" W on W.organization_id = \"Organization\".id\n" +
+										"         JOIN \"Waybill_items\" I on W.id = I.waybill_id\n" +
+										"         JOIN \"Nomenclature\" N on I.nomenclature = N.nomenclature_id\n" +
 										"\n" +
+										"WHERE W.date BETWEEN '"+ date1 +"' AND '"+ date2 +"' \n" +
+										"UNION SELECT \"Organization\".id,\n" +
+										"       \"Organization\".name,\n" +
+										"       null,\n" +
+										"       null\n" +
+										"FROM \"Organization\"\n" +
+										"JOIN \"Waybill\" W2 on \"Organization\".id = W2.organization_id\n" +
+										"WHERE date < '"+ date1 +"' OR date > '"+date2+"'\n" +
+										"ORDER BY id")
+		){
+			try(ResultSet rs = statement.executeQuery()) {
+				while (rs.next()){
+					System.out.println("company_id: "+rs.getInt(1)+" - company_name: "+rs.getString(2)+" - product_id: "+rs.getInt(3)+" - name: "+rs.getString(4));
+				}
+			}
+
+		}catch (SQLException exception){
+			exception.getMessage();
+		}
+	}
+
+	public void report5(@NotNull String date1,@NotNull String date2){
+		try(PreparedStatement statement = connection.prepareStatement(
+						"SELECT \"Waybill_items\".waybill_id,\n" +
+										"       \"Waybill_items\".price, \n" +
+										"       \"Waybill_items\".quantity\n" +
+										"FROM \"Waybill_items\"\n" +
+										"JOIN \"Waybill\" W on \"Waybill_items\".waybill_id = W.id\n" +
 										"where W.date between ? and ?")
 		){
 			statement.setDate(1,Date.valueOf(date1));
@@ -102,18 +133,20 @@ public class Reports {
 			try(ResultSet rs = statement.executeQuery()) {
 				double summ = 0,count = 0;
 				while (rs.next()){
-					System.out.println("company: "+rs.getString(1)+" - count: "+rs.getInt(2)+" - price: "+rs.getString(3)+" - name: "+rs.getString(4));
-					String summa = rs.getString(3)
+					System.out.println("waybill_id: "+rs.getInt(1)+" - price: "+rs.getString(2)+" - quantity: "+rs.getInt(3));
+					String summa = rs.getString(2)
 									.replace("$","")
 									.replace(",","");
-					count+= rs.getInt(2);
+					count+= rs.getInt(3);
 					summ+= Double.parseDouble(summa);
 				}
-				System.out.println("Av price: "+summ/count+"$");
+				String formattedRes = new DecimalFormat("#0.00").format(summ/count);
+				System.out.println("Av price: "+formattedRes+"$");
 			}
 
 		}catch (SQLException exception){
 			exception.getMessage();
 		}
 	}
+
 }

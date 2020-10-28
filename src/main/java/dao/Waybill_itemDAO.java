@@ -1,6 +1,7 @@
 package dao;
 
 import dto.Waybill_item;
+import org.jetbrains.annotations.NotNull;
 
 import java.sql.*;
 import java.util.ArrayList;
@@ -10,10 +11,11 @@ public class Waybill_itemDAO implements DAO<Waybill_item> {
 
 	final Connection connection;
 
-	public Waybill_itemDAO(Connection connection) {
+	public Waybill_itemDAO(@NotNull Connection connection) {
 		this.connection = connection;
 	}
 
+	@NotNull
 	@Override
 	public List<Waybill_item> getAll() {
 		List<Waybill_item> result = new ArrayList<>();
@@ -30,6 +32,7 @@ public class Waybill_itemDAO implements DAO<Waybill_item> {
 		return result;
 	}
 
+	@NotNull
 	@Override
 	public Waybill_item get(int id) {
 		try(Statement statement = connection.createStatement()){
@@ -46,7 +49,7 @@ public class Waybill_itemDAO implements DAO<Waybill_item> {
 	}
 
 	@Override
-	public void save(Waybill_item entity) {
+	public boolean save(@NotNull Waybill_item entity) {
 		try(PreparedStatement ps = connection.prepareStatement("INSERT INTO \"Waybill_items\"(item_id,waybill_id,price,quantity,nomenclature) VALUES (?,?,?,?,?)")){
 			System.out.println("work");
 			ps.setInt(1,entity.getId());
@@ -58,11 +61,13 @@ public class Waybill_itemDAO implements DAO<Waybill_item> {
 			ps.executeUpdate();
 		}catch (SQLException e){
 			e.getMessage();
+			return false;
 		}
+		return true;
 	}
 
 	@Override
-	public void update(Waybill_item entity) {
+	public boolean update(@NotNull Waybill_item entity) {
 		try(PreparedStatement ps = connection.prepareStatement("UPDATE \"Waybill_items\" SET waybill_id = ? ,price = ?,quantity = ?,nomenclature = ? WHERE item_id = ?)")){
 			ps.setInt(1,entity.getWaybill_id());
 			ps.setDouble(2,entity.getPrice());
@@ -72,18 +77,22 @@ public class Waybill_itemDAO implements DAO<Waybill_item> {
 			ps.executeUpdate();
 		}catch (SQLException e){
 			e.getMessage();
+			return false;
 		}
+		return true;
 	}
 
 	@Override
-	public void delete(Waybill_item entity) {
+	public boolean delete(int id) {
 		try(PreparedStatement ps = connection.prepareStatement("DELETE FROM \"Waybill_items\" WHERE id = ?)")){
-			ps.setInt(1,entity.getId());
+			ps.setInt(1,id);
 			if(ps.executeUpdate() == 0){
-				throw new IllegalStateException("Record with id: "+entity.getId()+" was not found");
+				throw new IllegalStateException("Record with id: "+id+" was not found");
 			}
 		}catch (SQLException e){
 			e.getMessage();
+			return false;
 		}
+		return true;
 	}
 }

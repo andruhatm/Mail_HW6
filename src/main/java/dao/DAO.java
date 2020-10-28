@@ -1,16 +1,20 @@
 package dao;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.util.List;
 
 public interface DAO<T> {
 
+	@NotNull
 	List<T> getAll();
 
+	@NotNull
 	T get(int id);
 
-	void save(T entity);
+	boolean save(T entity);
 
-	void update(T entity);
+	boolean update(T entity);
 
-	void delete(T entity);
+	boolean delete(int id);
 }

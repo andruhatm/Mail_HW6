@@ -1,6 +1,7 @@
 package dao;
 
 import dto.Waybill;
+import org.jetbrains.annotations.NotNull;
 
 import java.sql.*;
 import java.util.ArrayList;
@@ -10,10 +11,11 @@ public class WaybillDAO implements DAO<Waybill>{
 
 	final Connection connection;
 
-	public WaybillDAO(Connection connection) {
+	public WaybillDAO(@NotNull Connection connection) {
 		this.connection = connection;
 	}
 
+	@NotNull
 	@Override
 	public List<Waybill> getAll() {
 		List<Waybill> result = new ArrayList<>();
@@ -30,6 +32,7 @@ public class WaybillDAO implements DAO<Waybill>{
 		return result;
 	}
 
+	@NotNull
 	@Override
 	public Waybill get(int id) {
 		try(Statement statement = connection.createStatement()){
@@ -46,7 +49,7 @@ public class WaybillDAO implements DAO<Waybill>{
 	}
 
 	@Override
-	public void save(Waybill entity) {
+	public boolean save(@NotNull Waybill entity) {
 		try(PreparedStatement ps = connection.prepareStatement("INSERT INTO \"Waybill\"(id,date,organization_id) VALUES (?,?,?)")){
 			ps.setInt(1,entity.getId());
 			ps.setDate(2,entity.getDate());
@@ -54,11 +57,13 @@ public class WaybillDAO implements DAO<Waybill>{
 			ps.executeUpdate();
 		}catch (SQLException e){
 			e.getMessage();
+			return false;
 		}
+		return true;
 	}
 
 	@Override
-	public void update(Waybill entity) {
+	public boolean update(@NotNull Waybill entity) {
 		try(PreparedStatement ps = connection.prepareStatement("UPDATE \"Waybill\" SET date = ? ,organization_id = ? WHERE id = ?)")){
 			ps.setDate(1,entity.getDate());
 			ps.setInt(2,entity.getOrganization_id());
@@ -66,18 +71,22 @@ public class WaybillDAO implements DAO<Waybill>{
 			ps.executeUpdate();
 		}catch (SQLException e){
 			e.getMessage();
+			return false;
 		}
+		return true;
 	}
 
 	@Override
-	public void delete(Waybill entity) {
+	public boolean delete(int id) {
 		try(PreparedStatement ps = connection.prepareStatement("DELETE FROM \"Waybill\" WHERE id = ?)")){
-			ps.setInt(1,entity.getId());
+			ps.setInt(1,id);
 			if(ps.executeUpdate() == 0){
-				throw new IllegalStateException("Record with id: "+entity.getId()+" was not found");
+				throw new IllegalStateException("Record with id: "+id+" was not found");
 			}
 		}catch (SQLException e){
 			e.getMessage();
+			return false;
 		}
+		return true;
 	}
 }
